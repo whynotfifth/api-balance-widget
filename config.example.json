@@ -1,0 +1,34 @@
+{
+  "deepseek": {
+    "title": "DeepSeek API",
+    "openUrl": "https://platform.deepseek.com/usage",
+    "apiUrl": "https://api.deepseek.com/user/balance",
+    "auth": "bearer",
+    "token": "",
+    "refreshSeconds": 300,
+    "accent": "#4D6BFE",
+    "x": 60,
+    "y": 60,
+    "docked": false,
+    "dockEdge": "left"
+  },
+  "vibetoken": {
+    "title": "VibeToken",
+    "openUrl": "https://vibetoken.top/dashboard",
+    "apiUrl": "https://vibetoken.top/v1/usage",
+    "auth": "bearer",
+    "token": "",
+    "mode": "jsonpath",
+    "jsonPath": "balance",
+    "extraPath": "usage.total.actual_cost",
+    "quotaPerUnit": 500000,
+    "divisor": 1,
+    "currency": "$",
+    "refreshSeconds": 300,
+    "accent": "#A78BFA",
+    "x": 330,
+    "y": 60,
+    "docked": false,
+    "dockEdge": "left"
+  }
+}
