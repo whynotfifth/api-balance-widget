@@ -119,12 +119,12 @@ public struct WndPoint {
   }
 
   # ---------- 站点选择 ----------
-  if ($Site -and $Site -notin @('deepseek', 'vibetoken')) { throw "未知站点：$Site" }
+  # 支持任意平台：-Site 名称只要在 config.json 里有对应配置即可（不再限定 deepseek/vibetoken）
   if (-not $Site) {
     $c0 = Read-Config
     if ($c0.deepseek.token) { $script:Site = 'deepseek' }
     elseif ($c0.vibetoken.token) { $script:Site = 'vibetoken' }
-    else { throw '未指定 -Site（deepseek / vibetoken），且 config.json 里还没有任何 Token' }
+    else { throw '未指定 -Site（如 deepseek / vibetoken / 自定义平台名），且 config.json 里还没有任何 Token' }
   } else { $script:Site = $Site }
 
   $cfg = Read-Config
@@ -240,14 +240,16 @@ public struct WndPoint {
     } catch { }
   }
   function Ensure-Launchers {
-    # 静默启动器（vbs，无任何控制台窗口），缺失时自动生成
+    # 静默启动器（vbs，无任何控制台窗口），缺失时自动生成。
+    # 站点名取自启动器文件名：把 start-deepseek.vbs 复制成 start-你的平台.vbs 即可启动对应平台。
     try {
-      $vbsDeepseek = @'
+      $vbsOne = @'
 Set ws = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
 base = fso.GetParentFolderName(WScript.ScriptFullName) & "\"
+site = Replace(Replace(WScript.ScriptName, "start-", ""), ".vbs", "")
 ws.Environment("Process")("WIDGET_NO_CONSOLE") = "1"
-ws.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File """ & base & "balance-widget.ps1"" -Site deepseek", 0, False
+ws.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File """ & base & "balance-widget.ps1"" -Site " & site, 0, False
 '@
       $vbsAll = @'
 Set ws = CreateObject("WScript.Shell")
@@ -257,8 +259,8 @@ ws.Run "wscript.exe """ & base & "start-deepseek.vbs""", 0, False
 ws.Run "wscript.exe """ & base & "start-vibetoken.vbs""", 0, False
 '@
       $map = @{
-        'start-deepseek.vbs' = $vbsDeepseek
-        'start-vibetoken.vbs' = $vbsDeepseek.Replace('-Site deepseek', '-Site vibetoken')
+        'start-deepseek.vbs' = $vbsOne
+        'start-vibetoken.vbs' = $vbsOne
         'start-all.vbs' = $vbsAll
       }
       foreach ($name in $map.Keys) {

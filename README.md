@@ -1,4 +1,4 @@
-# API 余额桌面挂件（透明悬浮卡片）
+﻿# API 余额桌面挂件（透明悬浮卡片）
 
 > 把 **DeepSeek / VibeToken** 等 API 账户的余额常驻显示在桌面的透明小卡片上，
 > 单击直达充值页；拖到屏幕边缘自动收起成"悬浮球"角标——像手机 App 一样贴边收纳，鼠标碰到就弹出。
@@ -58,6 +58,67 @@
 
 > 支持任意 JSON 余额接口：把接口 URL、认证方式和字段路径填进配置即可，
 > 无需改代码。接口不通时可用 `probe-vibetoken.bat` 探测站点接口（提交 Issue 时附上探测输出很有帮助）。
+
+## 适配其他平台
+
+挂件**不绑定** DeepSeek / VibeToken——任何平台，只要提供一个**返回余额的 JSON 接口**，就能接入，无需改代码：
+
+1. 在 `config.json` 里新增一个配置块（名字随意，如 `"myplatform"`），填好下面几个字段；
+2. 把 `start-deepseek.vbs` 复制一份改名为 `start-myplatform.vbs`（**站点名取自文件名**），双击启动即可。
+
+| 配置项 | 作用 | 示例 |
+|---|---|---|
+| `apiUrl` | 余额查询接口地址 | `https://openrouter.ai/api/v1/auth/key` |
+| `auth` / `token` | 认证方式与凭证：`bearer`（API 密钥）或 `cookie`（会话） | `bearer` / `sk-or-...` |
+| `mode` | 解析模式：`jsonpath`（自定义字段，推荐）或 `newapi`（new-api 系站点） | `jsonpath` |
+| `jsonPath` | 余额字段路径（点分） | `data.limit` |
+| `extraPath` | 已用金额字段路径（可选） | `data.usage` |
+| `divisor` | 数值换算除数 | `1` |
+| `currency` | 货币符号 | `$` |
+| `openUrl` | 单击卡片打开的网页 | `https://openrouter.ai/settings/keys` |
+
+**示例：OpenRouter**（`GET /api/v1/auth/key`，返回 `data.limit`=总额度、`data.usage`=已用，单位 USD）：
+
+```json
+"myplatform": {
+  "title": "OpenRouter",
+  "openUrl": "https://openrouter.ai/settings/keys",
+  "apiUrl": "https://openrouter.ai/api/v1/auth/key",
+  "auth": "bearer",
+  "token": "sk-or-你的密钥",
+  "mode": "jsonpath",
+  "jsonPath": "data.limit",
+  "extraPath": "data.usage",
+  "divisor": 1,
+  "currency": "$",
+  "refreshSeconds": 300,
+  "accent": "#FF6600",
+  "x": 60,
+  "y": 200
+}
+```
+
+**示例：任意 new-api / one-api 中转站**（`/api/user/self` + 会话 Cookie，额度单位换算）：
+
+```json
+"myplatform": {
+  "title": "XX中转站",
+  "openUrl": "https://example.com/dashboard",
+  "apiUrl": "https://example.com/api/user/self",
+  "auth": "cookie",
+  "token": "session=eyJ...",
+  "mode": "newapi",
+  "quotaPerUnit": 500000,
+  "currency": "$",
+  "refreshSeconds": 300,
+  "accent": "#22C55E",
+  "x": 60,
+  "y": 200
+}
+```
+
+> 不知道平台接口长什么样？先把密钥临时填到 `vibetoken.token` 里跑 `probe-vibetoken.bat` 探测常见接口；
+> 或者提交 Issue 附上接口返回的 JSON 示例，我会帮你配好。
 
 ## 常见问题
 
