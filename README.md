@@ -22,13 +22,18 @@
 
 > 图为界面示意图（余额为演示数值）。左：DeepSeek 卡片（展开状态）；右：VibeToken 角标（贴边收起状态）。
 
-## 快速开始
+## 快速开始（零基础版：不用碰任何文件）
 
-1. 到 **Releases** 页面下载最新 `api-balance-widget-vX.X.X.zip`，解压到任意目录（或直接克隆本仓库）；
-2. 编辑 `config.json`（首次运行会自动生成模板；字段说明见 `config.example.json`）：
-   - **DeepSeek**：打开 <https://platform.deepseek.com/api_keys> 创建 API Key（`sk-` 开头），填入 `deepseek.token`；
-   - **VibeToken**：登录后在网站「API Keys」页面创建密钥，填入 `vibetoken.token`；
-3. 双击 **`start-all.vbs`** 启动两个挂件（无任何窗口弹出）。
+1. 到 **Releases** 页面下载最新 `api-balance-widget-vX.X.X.zip`，解压到任意目录；
+2. 双击 **`配置向导.vbs`**（首次启动挂件时也会自动弹出）；
+3. 在向导里：**选择平台 → 粘贴 API 密钥 → 点「自动检测接口」→「保存并启动」**；
+4. 完成！桌面出现余额卡片，单击打开充值页，拖到边缘变成角标。
+
+内置平台预设：**DeepSeek / VibeToken / OpenRouter / OpenAI 兼容中转站 / new-api 中转站**。
+「自动检测」会用你的密钥自动尝试常见余额接口并填好字段，不需要懂任何技术。
+
+> 高级用户也可以直接编辑 `config.json`（字段见下方说明），或者复制
+> `start-deepseek.vbs` 改名为 `start-你的平台.vbs` 来添加自定义平台。
 
 ### 开机自启
 
@@ -140,8 +145,10 @@
 
 ```
 balance-widget.ps1        挂件主程序（PowerShell + WPF）
+setup.ps1                 配置向导（零基础图形化配置）
+配置向导.vbs / .bat       打开配置向导（静默）
 start-all.vbs             一键启动两个挂件（静默）
-start-deepseek.vbs / start-vibetoken.vbs   单个挂件静默启动器
+start-deepseek.vbs / start-vibetoken.vbs   单个挂件静默启动器（复制改名可适配新平台）
 start-all.bat / start-*.bat                同功能的 bat 入口
 开机自启设置.bat / toggle-autostart.ps1    开机自启开关
 probe-vibetoken.ps1 / .bat                 站点接口探测工具
@@ -153,7 +160,8 @@ screenshots/               效果预览图
 
 ## 开发与调试
 
-- 冒烟测试（自动显示 5 秒后关闭，不写配置）：`powershell -NoProfile -ExecutionPolicy Bypass -File balance-widget.ps1 -Site deepseek -SmokeTest`
+- 挂件冒烟测试（自动显示 5 秒后关闭，不写配置）：`powershell -NoProfile -ExecutionPolicy Bypass -File balance-widget.ps1 -Site deepseek -SmokeTest`
+- 向导冒烟测试（自动保存到指定文件）：`powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1 -SmokeTest -ConfigPath <临时文件>`
 - 本地打包：`powershell -File build-release.ps1`，产物在 `dist/`
 - 发布 Release：推送 `v1.0.0` 格式的标签即可触发 GitHub Actions 自动打包
 

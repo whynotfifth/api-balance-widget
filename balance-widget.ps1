@@ -66,6 +66,7 @@ $script:defaultConfig = @'
 function Read-Config {
   if (-not (Test-Path $script:configPath)) {
     Set-Content -Path $script:configPath -Value $script:defaultConfig -Encoding UTF8
+    $script:configJustCreated = $true
   }
   Get-Content -Path $script:configPath -Raw -Encoding UTF8 | ConvertFrom-Json
 }
@@ -214,6 +215,13 @@ public struct WndPoint {
   # 启动时若上次处于贴边状态，直接以角标形式出现
   $window.Add_Loaded({
     if ($script:docked) { Collapse-Pill $script:dockEdge }
+    # 首次运行（配置文件刚生成、还没有任何密钥）→ 自动打开配置向导
+    if ($script:configJustCreated -and -not $SmokeTest) {
+      try {
+        $wiz = Join-Path $script:scriptDir '配置向导.vbs'
+        if (Test-Path $wiz) { Start-Process "$env:WINDIR\System32\wscript.exe" -ArgumentList "`"$wiz`"" }
+      } catch { }
+    }
   })
 
   # ---------- 界面小工具 ----------
@@ -644,6 +652,14 @@ try {
     $miEdit.Header = '编辑配置'
     $miEdit.Add_Click({ Start-Process notepad.exe -ArgumentList "`"$script:configPath`"" })
     $null = $m.Items.Add($miEdit)
+
+    $miWizard = New-Object System.Windows.Controls.MenuItem
+    $miWizard.Header = '配置向导…'
+    $miWizard.Add_Click({
+      $wiz = Join-Path $script:scriptDir '配置向导.vbs'
+      if (Test-Path $wiz) { Start-Process "$env:WINDIR\System32\wscript.exe" -ArgumentList "`"$wiz`"" }
+    })
+    $null = $m.Items.Add($miWizard)
 
     $miQuit = New-Object System.Windows.Controls.MenuItem
     $miQuit.Header = '退出'
