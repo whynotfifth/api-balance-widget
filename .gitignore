@@ -1,5 +1,6 @@
 # 绝不提交真实密钥
 config.json
+config.json.bak*
 widget-error.log
 _smoke-result.txt
 

@@ -68,7 +68,19 @@ function Read-Config {
     Set-Content -Path $script:configPath -Value $script:defaultConfig -Encoding UTF8
     $script:configJustCreated = $true
   }
-  Get-Content -Path $script:configPath -Raw -Encoding UTF8 | ConvertFrom-Json
+  try {
+    return (Get-Content -Path $script:configPath -Raw -Encoding UTF8 | ConvertFrom-Json)
+  } catch {
+    # 配置文件损坏：备份原文件、重建模板，避免挂件直接崩溃无法启动
+    # （原文件已备份，密钥仍可找回；同时会弹出配置向导引导重新配置）
+    try {
+      $bak = "$script:configPath.bak-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+      Copy-Item $script:configPath $bak -Force -ErrorAction Stop
+    } catch { }
+    Set-Content -Path $script:configPath -Value $script:defaultConfig -Encoding UTF8
+    $script:configJustCreated = $true
+    return (Get-Content -Path $script:configPath -Raw -Encoding UTF8 | ConvertFrom-Json)
+  }
 }
 
 function Get-JsonPath($obj, $path) {
