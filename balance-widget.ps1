@@ -292,22 +292,39 @@ ws.Run "wscript.exe """ & base & "start-vibetoken.vbs""", 0, False
     } catch { }
   }
   function Set-AutoStart([bool]$on) {
-    $lnkPath = Join-Path ([Environment]::GetFolderPath('Startup')) "余额挂件-$($script:Site).lnk"
+    $taskName = "余额挂件-$($script:Site)"
+    $startupDir = [Environment]::GetFolderPath('Startup')
     if ($on) {
       Ensure-Launchers
-      $ws = New-Object -ComObject WScript.Shell
-      $lnk = $ws.CreateShortcut($lnkPath)
-      $lnk.TargetPath = "$env:WINDIR\System32\wscript.exe"
-      $lnk.Arguments = "`"$(Join-Path $script:scriptDir "start-$($script:Site).vbs")`""
-      $lnk.WorkingDirectory = $script:scriptDir
-      $lnk.Description = "余额挂件 - $($script:Site)"
-      $lnk.Save()
+      $vbs = Join-Path $script:scriptDir "start-$($script:Site).vbs"
+      # 清理旧方式（启动文件夹快捷方式），避免重复启动
+      Remove-Item (Join-Path $startupDir "$taskName.lnk") -Force -ErrorAction SilentlyContinue
+      # 主方式：任务计划程序「登录时」触发（比启动文件夹更可靠，快速启动下也不易失效）
+      try {
+        $action = New-ScheduledTaskAction -Execute "$env:WINDIR\System32\wscript.exe" -Argument "`"$vbs`""
+        $trigger = New-ScheduledTaskTrigger -AtLogOn
+        $null = Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Description "余额挂件 - $($script:Site)（登录时自动启动）" -Force
+      } catch {
+        # 回退：启动文件夹快捷方式
+        try {
+          $ws = New-Object -ComObject WScript.Shell
+          $lnk = $ws.CreateShortcut((Join-Path $startupDir "$taskName.lnk"))
+          $lnk.TargetPath = "$env:WINDIR\System32\wscript.exe"
+          $lnk.Arguments = "`"$vbs`""
+          $lnk.WorkingDirectory = $script:scriptDir
+          $lnk.Save()
+        } catch { }
+      }
     } else {
-      Remove-Item $lnkPath -Force -ErrorAction SilentlyContinue
+      try { Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction Stop } catch { }
+      Remove-Item (Join-Path $startupDir "$taskName.lnk") -Force -ErrorAction SilentlyContinue
     }
   }
   function Test-AutoStart {
-    Test-Path (Join-Path ([Environment]::GetFolderPath('Startup')) "余额挂件-$($script:Site).lnk")
+    try {
+      if (Get-ScheduledTask -TaskName "余额挂件-$($script:Site)" -ErrorAction Stop) { return $true }
+    } catch { }
+    return (Test-Path (Join-Path ([Environment]::GetFolderPath('Startup')) "余额挂件-$($script:Site).lnk"))
   }
 
   # ---------- 余额获取（独立 Runspace 异步执行，不卡界面） ----------
